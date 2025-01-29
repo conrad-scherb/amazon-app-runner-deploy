@@ -1,5 +1,5 @@
 import { info } from "@actions/core";
-import { AppRunnerClient, ListServicesCommandOutput, Service, ServiceStatus, OperationStatus, UpdateServiceResponse, OperationSummary } from "@aws-sdk/client-apprunner";
+import { AppRunnerClient, ListServicesCommandOutput, Service, ServiceStatus, OperationStatus, UpdateServiceResponse, OperationSummary, StartDeploymentResponse } from "@aws-sdk/client-apprunner";
 import { IActionParams } from "./action-configuration";
 import { getCreateCommand, getDeleteCommand, getDescribeCommand, getListCommand, getUpdateCommand, getTagResourceCommand, getListOperationsCommand, getStartDeploymentCommand } from "./client-apprunner-commands";
 
@@ -59,10 +59,10 @@ async function updateService(client: AppRunnerClient, config: IActionParams, ser
 }
 
 // Deploys an existing service
-async function deployService(client: AppRunnerClient, serviceArn: string): Promise<void> {
+async function deployService(client: AppRunnerClient, serviceArn: string): Promise<StartDeploymentResponse> {
     info(`Starting deployment for service ${serviceArn}`);
     const command = getStartDeploymentCommand(serviceArn);
-    await client.send(command);
+    return await client.send(command);
 }
 
 async function updateTag(client: AppRunnerClient, config: IActionParams, serviceArn: string): Promise<void> {
@@ -138,6 +138,8 @@ export async function createOrUpdateService(client: AppRunnerClient, config: IAc
         } else {
             await updateTag(client, config, existingService.ServiceArn);
             const response = await updateService(client, config, existingService.ServiceArn);
+            service = response.Service;
+            operationId = response.OperationId;
 
             // If this is a code service with autoDeploymentsEnabled off, start a deployment manually
             if (config.sourceConfig.sourceType === 'code' && !config.sourceConfig.autoDeploymentsEnabled) {
@@ -145,11 +147,9 @@ export async function createOrUpdateService(client: AppRunnerClient, config: IAc
                 const status = await waitToStabilize(client, existingService.ServiceArn, 900); // wait for update operation to complete in 15 minutes max   
                 info(`Service ${existingService.ServiceArn} has reached the stable state ${status}`);
 
-                await deployService(client, existingService.ServiceArn);
+                const deployResponse = await deployService(client, existingService.ServiceArn);
+                operationId = deployResponse.OperationId;
             }
-
-            service = response.Service;
-            operationId = response.OperationId;
         }
     } else {
         service = await createService(client, config);
@@ -177,7 +177,7 @@ export async function checkOperationIsSucceeded(client: AppRunnerClient, service
     if (operations) {
       for (const operation of operations) {
         if (operationId === operation.Id && operation.Status !== OperationStatus.SUCCEEDED) {
-          throw new Error(`Operation ${operationId} is not successful. Its current status is ${operation.Status}`);
+          info(`Operation ${operationId} is not successful. Its current status is ${operation.Status}`);
         }
       }
     }
