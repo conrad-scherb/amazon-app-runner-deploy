@@ -141,6 +141,10 @@ export async function createOrUpdateService(client: AppRunnerClient, config: IAc
 
             // If this is a code service with autoDeploymentsEnabled off, start a deployment manually
             if (config.sourceConfig.sourceType === 'code' && !config.sourceConfig.autoDeploymentsEnabled) {
+                // Wait for the update operation to complete
+                const status = await waitToStabilize(client, existingService.ServiceArn, 900); // wait for update operation to complete in 15 minutes max   
+                info(`Service ${existingService.ServiceArn} has reached the stable state ${status}`);
+
                 await deployService(client, existingService.ServiceArn);
             }
 
