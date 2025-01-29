@@ -1,4 +1,4 @@
-import { CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, SourceConfiguration, UpdateServiceCommand, TagResourceCommand, ListOperationsCommand } from "@aws-sdk/client-apprunner";
+import { CreateServiceCommand, DeleteServiceCommand, DescribeServiceCommand, ImageRepositoryType, ListServicesCommand, SourceConfiguration, UpdateServiceCommand, TagResourceCommand, ListOperationsCommand, StartDeploymentCommand } from "@aws-sdk/client-apprunner";
 import { ICodeConfiguration, ICreateOrUpdateActionParams, IImageConfiguration } from "./action-configuration";
 
 export function getCreateCommand(config: ICreateOrUpdateActionParams): CreateServiceCommand {
@@ -29,6 +29,12 @@ export function getUpdateCommand(serviceArn: string, config: ICreateOrUpdateActi
         SourceConfiguration: (config.sourceConfig.sourceType == 'image')
             ? getImageSourceConfiguration(config.port, config.sourceConfig, config.environment, config.environmentSecret)
             : getCodeSourceConfiguration(config.port, config.sourceConfig, config.environment, config.environmentSecret),
+    });
+}
+
+export function getStartDeploymentCommand(serviceArn: string): StartDeploymentCommand {
+    return new StartDeploymentCommand({
+        ServiceArn: serviceArn,
     });
 }
 
