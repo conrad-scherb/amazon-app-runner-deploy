@@ -1,7 +1,7 @@
 import { info } from "@actions/core";
 import { AppRunnerClient, ListServicesCommandOutput, Service, ServiceStatus, OperationStatus, UpdateServiceResponse, OperationSummary } from "@aws-sdk/client-apprunner";
 import { IActionParams } from "./action-configuration";
-import { getCreateCommand, getDeleteCommand, getDescribeCommand, getListCommand, getUpdateCommand, getTagResourceCommand, getListOperationsCommand } from "./client-apprunner-commands";
+import { getCreateCommand, getDeleteCommand, getDescribeCommand, getListCommand, getUpdateCommand, getTagResourceCommand, getListOperationsCommand, getStartDeploymentCommand } from "./client-apprunner-commands";
 
 // Core service attributes to be returned to the calling GitHub action handler code
 export interface IServiceInfo {
@@ -55,8 +55,14 @@ async function createService(client: AppRunnerClient, config: IActionParams): Pr
 // Update an existing service
 async function updateService(client: AppRunnerClient, config: IActionParams, serviceArn: string): Promise<UpdateServiceResponse> {
     info(`Updating existing service ${config.serviceName} (${serviceArn})`);
-    const command = getUpdateCommand(serviceArn, config);
-    return await client.send(command);
+    return await client.send(getUpdateCommand(serviceArn, config));
+}
+
+// Deploys an existing service
+async function deployService(client: AppRunnerClient, serviceArn: string): Promise<void> {
+    info(`Starting deployment for service ${serviceArn}`);
+    const command = getStartDeploymentCommand(serviceArn);
+    await client.send(command);
 }
 
 async function updateTag(client: AppRunnerClient, config: IActionParams, serviceArn: string): Promise<void> {
@@ -132,6 +138,12 @@ export async function createOrUpdateService(client: AppRunnerClient, config: IAc
         } else {
             await updateTag(client, config, existingService.ServiceArn);
             const response = await updateService(client, config, existingService.ServiceArn);
+
+            // If this is a code service with autoDeploymentsEnabled off, start a deployment manually
+            if (config.sourceConfig.sourceType === 'code' && !config.sourceConfig.autoDeploymentsEnabled) {
+                await deployService(client, existingService.ServiceArn);
+            }
+
             service = response.Service;
             operationId = response.OperationId;
         }
