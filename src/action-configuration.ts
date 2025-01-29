@@ -15,6 +15,7 @@ export interface ICodeConfiguration {
     runtime: Runtime;
     buildCommand: string;
     startCommand: string;
+    autoDeploymentsEnabled: boolean;
 }
 
 export interface IImageConfiguration {
@@ -184,6 +185,7 @@ function getSourceCodeConfig(): ICodeConfiguration {
         runtime: getRuntime(),
         buildCommand: getInput('build-command', { required: true }),
         startCommand: getInput('start-command', { required: true }),
+        autoDeploymentsEnabled: getInputBool('auto-deployments-enabled', true)
     }
 }
 

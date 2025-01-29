@@ -20,6 +20,7 @@ export interface FakeInput {
     memory?: string;
     tags?: string;
     'auto-scaling-config-arn'?: string;
+    'auto-deployments-enabled'?: string;
 }
 
 export interface FakeMultilineInput {

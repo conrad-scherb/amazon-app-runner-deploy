@@ -25,6 +25,7 @@ const BUILD_COMMAND = "build-command";
 const START_COMMAND = "start-command";
 const PORT = "80";
 const DEFAULT_REGION = 'us-east-1';
+const AUTO_DEPLOYMENT_ENABLED = 'true';
 const TAGS = '{ "env": "test" }'
 const OPERATION_ID = "test-operation-id";
 
@@ -148,6 +149,7 @@ describe('Input Validation', () => {
             "build-command": BUILD_COMMAND,
             port: PORT,
             "wait-for-service-stability": 'true',
+            'auto-deployments-enabled': AUTO_DEPLOYMENT_ENABLED
         };
 
         getInputMock.mockImplementation((name, options) => {
@@ -374,6 +376,7 @@ describe('Deploy to AppRunner', () => {
             memory: '5',
             tags: TAGS,
             'auto-scaling-config-arn': AUTO_SCALING_CONFIG_ARN,
+            'auto-deployments-enabled': 'false',
         };
 
         getInputMock.mockImplementation((name) => {

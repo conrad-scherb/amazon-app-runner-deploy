@@ -65,6 +65,10 @@ inputs:
   copy-secret-env-vars:
     description: 'Multiline list of pipeline environment variables to be copied over to the App Runner service secret environment'
     required: false
+  auto-deployments-enabled:
+     description: 'Whether to enable AutoDeploymentsEnabled'
+     required: false
+     default: 'true'
   tags:
     description: 'key-value pairs to associate with the service. This input should be JSON-formatted, for example { "env": "test" }'
     required: false
